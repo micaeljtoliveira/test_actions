@@ -15,8 +15,8 @@ jobs:
       - name: Check PR Status
         # Check if PR has been merged
         run: |
-          echo "${{ github.event.issue.pull_request.merget_at }}"
-          if [[ "${{ github.event.issue.pull_request.merget_at }}" == "" ]]; then
+          echo "${{ github.event.issue.pull_request.merged_at }}"
+          if [[ "${{ github.event.issue.pull_request.merged_at }}" == "" ]]; then
             echo "::error::Pull request has not been merged yet. Cannot cherry-pick commits."
             exit 1
           fi
