@@ -12,18 +12,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check PR Status
+        # Check if PR has been merged
+        run: |
+          echo "${{ github.event.issue.pull_request.merget_at }}"
+          if [[ "${{ github.event.issue.pull_request.merget_at }}" == "" ]]; then
+            echo "::error::Pull request has not been merged yet. Cannot cherry-pick commits."
+            exit 1
+          fi
+
       - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
-        #  checkout the main branch, not the one from the PR.
+        # checkout the main branch, not the one from the PR.
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr checkout ${{ github.event.issue.number }}
       
-      - name: Check PR Status
-        # Check if PR has been merged
-        run: |
-          echo "${{ toJson(github) }}"
-          echo "${{ github.event.issue.pull_request.state }}"
-          echo "${{ github.event.issue.pull_request.author }}"
-          echo "${{ github.event.issue.user.login }}"
-
