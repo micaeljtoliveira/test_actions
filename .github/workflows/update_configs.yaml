@@ -9,13 +9,35 @@ jobs:
     if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'Open PR')
     runs-on: ubuntu-latest
     steps:
+      - name: Get PR Status
+        # Get PR status
+        uses: actions/github-script@v7
+        id: get_status
+        with:
+          script: |
+            const { data: pr } = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            return pr;
+
+    - name: Check PR Status
+      # Check if PR has been merged
+      run: |
+        if [[ "${{ steps.get_status.outputs.results.merged }}" == "true" ]]; then
+          echo "PR merged" ${{ steps.get_status.outputs.results.merged }}
+        else
+          echo "PR NOT merged" ${{ steps.get_status.outputs.results.merged }}
+        fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check status
-        run: git status
-
       - name: Checkout PR
+        # Since this is triggerd by a comment, the checkout repository step will
+        #  checkout the main branch, not the one from the PR.
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr checkout ${{ github.event.issue.number }}
+      
