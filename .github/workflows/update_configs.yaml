@@ -9,16 +9,6 @@ jobs:
     if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'Open PR')
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR Status
-        # Check if PR has been merged
-        run: |
-          echo "${{ github.event.pull_request.state }}"
-          if [[ "${{ github.event.pull_request.state }}" == "MERGED" ]]; then
-            echo "PR merged"
-          else
-            echo "PR NOT merged"
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -29,3 +19,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh pr checkout ${{ github.event.issue.number }}
       
+      - name: Check PR Status
+        # Check if PR has been merged
+        run: |
+          echo "${{ github.event.pull_request.state }}"
+          if [[ "${{ github.event.pull_request.state }}" == "MERGED" ]]; then
+            echo "PR merged"
+          else
+            echo "PR NOT merged"
+          fi
