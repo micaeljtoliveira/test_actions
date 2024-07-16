@@ -22,9 +22,6 @@ jobs:
       - name: Check PR Status
         # Check if PR has been merged
         run: |
-          echo "${{ github.event.issue.pull_request.state }}"
-          if [[ "${{ github.event.issue.pull_request.state }}" == "MERGED" ]]; then
-            echo "PR merged"
-          else
-            echo "PR NOT merged"
-          fi
+          echo "${{ github.event.issue.pull_request }}"
+          echo "${{ github.event.issue.user.login }}"
+
