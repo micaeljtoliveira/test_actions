@@ -19,17 +19,17 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
-            });
-            return pr;
+            })
+            return pr
 
-    - name: Check PR Status
-      # Check if PR has been merged
-      run: |
-        if [[ "${{ steps.get_status.outputs.results.merged }}" == "true" ]]; then
-          echo "PR merged" ${{ steps.get_status.outputs.results.merged }}
-        else
-          echo "PR NOT merged" ${{ steps.get_status.outputs.results.merged }}
-        fi
+      - name: Check PR Status
+        # Check if PR has been merged
+        run: |
+          if [[ "${{ steps.get_status.outputs.results.merged }}" == "true" ]]; then
+            echo "PR merged" ${{ steps.get_status.outputs.results.merged }}
+          else
+            echo "PR NOT merged" ${{ steps.get_status.outputs.results.merged }}
+          fi
 
       - name: Checkout repository
         uses: actions/checkout@v4
