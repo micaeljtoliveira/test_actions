@@ -22,6 +22,7 @@ jobs:
       - name: Check PR Status
         # Check if PR has been merged
         run: |
+          echo "${{ toJson(github) }}"
           echo "${{ github.event.issue.pull_request.state }}"
           echo "${{ github.event.issue.pull_request.author }}"
           echo "${{ github.event.issue.user.login }}"
