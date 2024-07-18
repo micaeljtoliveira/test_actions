@@ -80,9 +80,7 @@ jobs:
 
           # Check that cherry-pick target branches actually exist
           for branch in ${{ steps.command.outputs.branches }}; do
-            if $(git ls-remote --heads origin ${branch}); then
-              echo "Found branch $branch in repository."
-            else
+            if [[ "$(git ls-remote --heads origin ${branch})" == "" ]]; then
               echo "::error::Could not find branch $branch in repository."
               exit 1
             fi
