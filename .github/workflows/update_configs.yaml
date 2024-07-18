@@ -5,9 +5,12 @@ on:
     types: [created]
 
 jobs:
-  open_pr:
+  process_command:
     if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'cherry-pick')
     runs-on: ubuntu-latest
+    outputs:
+      commits: ${{ steps.command.outputs.commits }}
+      branches: ${{ steps.command.outputs.branches }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,15 +52,25 @@ jobs:
             echo "Syntax error"
             exit 1
           fi
-          echo "commits=${commits[@]}" >> $GITHUB_OUTPUT
-          echo "branches=${branches[@]}" >> $GITHUB_OUTPUT
-          echo "commits=${commits[@]}"
-          echo "branches=${branches[@]}"
+          echo "commits=$(jq -cn '$ARGS.positional' --args -- "${commits[@]}")" >> $GITHUB_OUTPUT
+          echo "branches=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
+          echo "commits=$(jq -cn '$ARGS.positional' --args -- "${commits[@]}")"
+          echo "branches=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")"
+  
+  open_pr:
+    runs-on: ubuntu-latest 
+    needs: process_command
+    strategy:
+      matrix:
+        commit: ${{ fromJson(needs.process_command.outputs.commits) }}
+        branch: ${{ fromJson(needs.process_command.outputs.branches) }}
+    steps:
+      - name: Test
+        run: echo ${{ matrix.commit }} ${{ matrix.branch }}
 
-      - name: Checkout PR
+#      - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
         # checkout the main branch, not the one from the PR.
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh pr checkout ${{ github.event.issue.number }}
-      
+#        env:
+#          GH_TOKEN: ${{ github.token }}
+#        run: gh pr checkout ${{ github.event.issue.number }}  
