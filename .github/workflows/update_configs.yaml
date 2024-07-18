@@ -6,7 +6,7 @@ on:
 
 jobs:
   open_pr:
-    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'Open PR')
+    if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'cherry-pick')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,6 +20,37 @@ jobs:
             echo "::error::Pull request has not been merged yet. Cannot cherry-pick commits."
             exit 1
           fi
+
+      - name: Parse cherry-pick command
+        id: command
+        shell: bash
+        run: |
+          set -f
+          command=($(echo "${{ github.event.comment.body }}" | grep cherry-pick))
+          command=("${command[@]:1}")
+
+          has_separator=false
+          arg_type=hash
+          commits=()
+          branches=()
+          for token in ${command[@]}; do
+            if [[ "$token" == "into" ]]; then
+              arg_type=branch
+              has_separator=true
+            else
+              if [[ "$arg_type" == "hash" ]]; then
+                commits+=( $token )
+              elif [[ "$arg_type" == "branch" ]]; then
+                branches+=( $token )
+              fi
+            fi
+          done
+          if [ "$has_separator" = false ]; then
+            echo "Syntax error"
+            exit 1
+          fi
+          echo "commits=${commits[@]}" >> $GITHUB_OUTPUT
+          echo "branches=${branches[@]}" >> $GITHUB_OUTPUT
 
       - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
