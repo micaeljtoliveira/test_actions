@@ -68,7 +68,7 @@ jobs:
 
       - name: Check commit list
         run: |
-          list=$(echo "${{ steps.command.outputs.commits }}" | jq -r '.[]')
+          list=$(echo '${{ steps.command.outputs.commits }}' | jq -r '.[]')          
           echo "::debug::List of commits: $list"
           for commit in $list; do
             if git merge-base --is-ancestor $commit ${{ steps.target.outputs.name }}; then 
