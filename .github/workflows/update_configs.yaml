@@ -80,7 +80,7 @@ jobs:
 
           # Check that cherry-pick target branches actually exist
           for branch in ${{ steps.command.outputs.branches }}; do
-            if [[ "$(git ls-remote --heads origin ${branch})" == "" ]]; then
+            if [[ -z "$(git ls-remote --heads origin ${branch})" ]]; then
               echo "::error::Could not find branch $branch in repository."
               exit 1
             fi
@@ -89,7 +89,7 @@ jobs:
           # Check that branches with the cherry-picked commits have not been pushed to the remote yet
           for branch in ${{ steps.command.outputs.branches }}; do
             new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_$branch
-            if [[ -z "$(git ls-remote --heads origin $new_branch)" ]]; then
+            if [[ -n "$(git ls-remote --heads origin $new_branch)" ]]; then
               echo "::error::Found branch $new_branch in repository."
               echo "::error::It seems threre was a previous attempt to cherry-pick commits from this PR into branch $branch."
               exit 1
