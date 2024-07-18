@@ -19,6 +19,12 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Get PR target branch
+        id: target
+        run: |
+          target_branch=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" | jq -r .base.ref)
+          echo "::set-output name=$target_branch"
 
       - name: Check PR Status
         # Check if PR has been merged
@@ -65,10 +71,10 @@ jobs:
 #          GH_TOKEN: ${{ github.token }}
         run: |
           for commit in ${{ steps.command.outputs.commit }}; do
-            if git merge-base --is-ancestor $commit ${{ github.event.pull_request.ref }}; then 
-              echo "Commit $commit found in branch ${{ github.event.pull_request.ref }}."
+            if git merge-base --is-ancestor $commit ${{ steps.target.outputs.name }}; then 
+              echo "Commit $commit found in ${{ steps.target.outputs.name }} branch."
             else
-              echo "::error::Could not find commit $commit in branch ${{ github.event.pull_request.ref }}."
+              echo "::error::Could not find commit in ${{ steps.target.outputs.name }} branch."
               exit 1
             fi
           done
