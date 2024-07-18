@@ -68,7 +68,9 @@ jobs:
 
       - name: Check commit list
         run: |
-          for commit in $(echo ${{ steps.command.outputs.commits }} | jq -r '.[]'); do
+          list=$(echo "${{ steps.command.outputs.commits }}" | jq -r '.[]')
+          echo "::debug::List of commits: $list"
+          for commit in $list; do
             if git merge-base --is-ancestor $commit ${{ steps.target.outputs.name }}; then 
               echo "Commit $commit found in ${{ steps.target.outputs.name }} branch."
             else
