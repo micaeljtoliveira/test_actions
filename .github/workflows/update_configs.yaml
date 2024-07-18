@@ -70,6 +70,7 @@ jobs:
         run: |
           list=$(echo '${{ steps.command.outputs.commits }}' | jq -r '.[]')          
           echo "List of commits: $list"
+          git fetch origin ${{ steps.target.outputs.name }}
           git branch -a
           for commit in $list; do
             git merge-base --is-ancestor ${commit} ${{ steps.target.outputs.name }}
