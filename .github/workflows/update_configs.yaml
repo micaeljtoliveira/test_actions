@@ -12,19 +12,19 @@ jobs:
       commits: ${{ steps.command.outputs.commits }}
       branches: ${{ steps.command.outputs.branches }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
+        run: echo "$GITHUB_CONTEXT"      
+        
       - name: Get PR target branch
         id: target
         run: |
           target_branch=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" | jq -r .base.ref)
-          echo "::set-output name=$target_branch"
+          echo "name=$target_branch" >> $GITHUB_OUTPUT
 
       - name: Check PR Status
         # Check if PR has been merged
@@ -70,7 +70,7 @@ jobs:
 #        env:
 #          GH_TOKEN: ${{ github.token }}
         run: |
-          for commit in ${{ steps.command.outputs.commit }}; do
+          for commit in ${{ steps.command.outputs.commits }}; do
             if git merge-base --is-ancestor $commit ${{ steps.target.outputs.name }}; then 
               echo "Commit $commit found in ${{ steps.target.outputs.name }} branch."
             else
