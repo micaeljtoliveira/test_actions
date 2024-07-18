@@ -71,6 +71,7 @@ jobs:
               echo "::error::Could not find commit $commit in branch ${{ github.event.pull_request.ref }}."
               exit 1
             fi
+          done
   
   open_pr:
     runs-on: ubuntu-latest 
