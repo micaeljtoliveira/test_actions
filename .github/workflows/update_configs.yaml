@@ -67,10 +67,8 @@ jobs:
           echo "branches=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
 
       - name: Check commit list
-#        env:
-#          GH_TOKEN: ${{ github.token }}
         run: |
-          for commit in ${{ steps.command.outputs.commits }}; do
+          for commit in $(echo ${{ steps.command.outputs.commits }} | jq -r '.[]'); do
             if git merge-base --is-ancestor $commit ${{ steps.target.outputs.name }}; then 
               echo "Commit $commit found in ${{ steps.target.outputs.name }} branch."
             else
