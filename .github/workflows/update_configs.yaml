@@ -43,8 +43,8 @@ jobs:
           fi
 
           # Output lists of commits and branches
-          echo "commits=${commits[@]}"
-          echo "branches=${branches[@]}"
+          echo "commits=${commits[@]}" >> $GITHUB_OUTPUT
+          echo "branches=${branches[@]}" >> $GITHUB_OUTPUT
 
           # We also output the list of branches as json, so they can be used to generate a matrix for the next job 
           echo "branch_matrix=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
