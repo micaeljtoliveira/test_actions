@@ -51,6 +51,8 @@ jobs:
           fi
           echo "commits=${commits[@]}" >> $GITHUB_OUTPUT
           echo "branches=${branches[@]}" >> $GITHUB_OUTPUT
+          echo "commits=${commits[@]}"
+          echo "branches=${branches[@]}"
 
       - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
