@@ -12,6 +12,11 @@ jobs:
       commits: ${{ steps.command.outputs.commits }}
       branches: ${{ steps.command.outputs.branches }}
     steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -49,13 +54,23 @@ jobs:
             fi
           done
           if [ "$has_separator" = false ]; then
-            echo "Syntax error"
+            echo "::error::Syntax error in cherry-pick command: missing separator."
             exit 1
           fi
           echo "commits=$(jq -cn '$ARGS.positional' --args -- "${commits[@]}")" >> $GITHUB_OUTPUT
           echo "branches=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
-          echo "commits=$(jq -cn '$ARGS.positional' --args -- "${commits[@]}")"
-          echo "branches=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")"
+
+      - name: Check commit list
+#        env:
+#          GH_TOKEN: ${{ github.token }}
+        run: |
+          for commit in ${{ steps.command.outputs.commit }}; do
+            if git merge-base --is-ancestor $commit ${{ github.event.pull_request.ref }}; then 
+              echo "Commit $commit found in branch ${{ github.event.pull_request.ref }}."
+            else
+              echo "::error::Could not find commit $commit in branch ${{ github.event.pull_request.ref }}."
+              exit 1
+            fi
   
   open_pr:
     runs-on: ubuntu-latest 
@@ -73,4 +88,4 @@ jobs:
         # checkout the main branch, not the one from the PR.
 #        env:
 #          GH_TOKEN: ${{ github.token }}
-#        run: gh pr checkout ${{ github.event.issue.number }}  
+#        run: gh pr checkout ${{ github.event.issue.number }}
