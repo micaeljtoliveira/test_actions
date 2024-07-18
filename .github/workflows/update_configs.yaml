@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
         
       - name: Dump GitHub context
         env:
@@ -68,13 +70,13 @@ jobs:
 
       - name: Check commit list
         run: |
-          list=$(echo '${{ steps.command.outputs.commits }}' | jq -r '.[]')          
+          list=$(echo '${{ steps.command.outputs.commits }}' | jq -r '.[]')
           echo "List of commits: $list"
-          git fetch origin ${{ steps.target.outputs.name }}
+          #git fetch origin ${{ steps.target.outputs.name }}
           git branch -a
           for commit in $list; do
-            git merge-base --is-ancestor ${commit} ${{ steps.target.outputs.name }}
-            if git merge-base --is-ancestor ${commit} ${{ steps.target.outputs.name }}; then 
+            git merge-base --is-ancestor ${commit} origin/${{ steps.target.outputs.name }}
+            if git merge-base --is-ancestor ${commit} origin/${{ steps.target.outputs.name }}; then 
               echo "Commit ${commit} found in ${{ steps.target.outputs.name }} branch."
             else
               echo "::error::Could not find commit ${commit} in ${{ steps.target.outputs.name }} branch."
