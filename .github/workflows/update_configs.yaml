@@ -11,32 +11,8 @@ jobs:
     outputs:
       commits: ${{ steps.command.outputs.commits }}
       branches: ${{ steps.command.outputs.branches }}
+      branch_matrix: ${{ steps.command.outputs.branch_matrix }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-        
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"      
-        
-      - name: Get PR target branch
-        id: target
-        run: |
-          target_branch=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" | jq -r .base.ref)
-          echo "name=$target_branch" >> $GITHUB_OUTPUT
-
-      - name: Check PR Status
-        # Check if PR has been merged
-        run: |
-          echo "${{ github.event.issue.pull_request.merged_at }}"
-          if [[ "${{ github.event.issue.pull_request.merged_at }}" == "" ]]; then
-            echo "::error::Pull request has not been merged yet. Cannot cherry-pick commits."
-            exit 1
-          fi
-
       - name: Parse cherry-pick command
         id: command
         shell: bash
@@ -65,18 +41,59 @@ jobs:
             echo "::error::Syntax error in cherry-pick command: missing separator."
             exit 1
           fi
-          echo "commits=$(jq -cn '$ARGS.positional' --args -- "${commits[@]}")" >> $GITHUB_OUTPUT
-          echo "branches=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
 
-      - name: Check commit list
+          # Output lists of commits and branches
+          echo "commits=${commits[@]}"
+          echo "branches=${branches[@]}"
+
+          # We also output the list of branches as json, so they can be used to generate a matrix for the next job 
+          echo "branch_matrix=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # We need the history of all branches for sanity checks
+          fetch-depth: 0
+
+      - name: Sanity checks
         run: |
-          for commit in $(echo '${{ steps.command.outputs.commits }}' | jq -r '.[]'); do
-            if git merge-base --is-ancestor ${commit} origin/${{ steps.target.outputs.name }}; then 
-              echo "Commit ${commit} found in ${{ steps.target.outputs.name }} branch."
+          # We want to avoid a situation where some pull requests are opened 
+          # Here we do all possible sanity checks so that we can avoid failing after some pull requests 
+          # Otherwise and avoid creating new pull requests
+        
+          # Check if PR has been merged
+          if [[ "${{ github.event.issue.pull_request.merged_at }}" == "" ]]; then
+            echo "::error::Pull request has not been merged yet. Cannot cherry-pick commits."
+            exit 1
+          fi
+
+          # Check that the commits to cherry-pick are actually part of this PRs target branch
+          target=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" | jq -r .base.ref)
+          for commit in ${{ steps.command.outputs.commits }}; do
+            if git merge-base --is-ancestor ${commit} origin/$target; then 
+              echo "Commit $commit found in $target branch."
             else
-              echo "::error::Could not find commit ${commit} in ${{ steps.target.outputs.name }} branch."
+              echo "::error::Could not find commit $commit in $target branch."
               exit 1
             fi
+          done
+
+          # Check that cherry-pick target branches actually exist
+          for branch in ${{ steps.command.outputs.branches }}; do
+            if $(git ls-remote --heads origin ${branch}); then
+              echo "Found branch $branch in repository."
+            else
+              echo "::error::Could not find branch $branch in repository."
+              exit 1
+          done
+
+          # Check that branches with the cherry-picked commits have not been pushed to the remote yet
+          for branch in ${{ steps.command.outputs.branches }}; do
+            if $(git ls-remote --heads origin cherry_pick_from_pr${{ github.event.issue.number }}_into_${branch}); then
+              echo "Found branch $branch in repository."
+            else
+              echo "::error::Could not find branch $branch in repository."
+              exit 1
           done
   
   open_pr:
@@ -84,11 +101,20 @@ jobs:
     needs: process_command
     strategy:
       matrix:
-        commit: ${{ fromJson(needs.process_command.outputs.commits) }}
-        branch: ${{ fromJson(needs.process_command.outputs.branches) }}
+        branch: ${{ fromJson(needs.process_command.outputs.branch_matrix) }}
     steps:
-      - name: Test
-        run: echo ${{ matrix.commit }} ${{ matrix.branch }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # We need the history of all branches for sanity checks
+          fetch-depth: 0
+ 
+      - name: Cherry-pick commits
+        run: |
+          new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
+          git checkout -b $new_branch ${{ matrix.branch }}
+          git cherry-pick ${{ needs.process_command.outputs.commits }}
+          git push --set-upstream origin $new_branch 
 
 #      - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
@@ -96,3 +122,9 @@ jobs:
 #        env:
 #          GH_TOKEN: ${{ github.token }}
 #        run: gh pr checkout ${{ github.event.issue.number }}
+
+
+#      - name: Dump GitHub context
+#        env:
+#          GITHUB_CONTEXT: ${{ toJson(github) }}
+#        run: echo "$GITHUB_CONTEXT"
