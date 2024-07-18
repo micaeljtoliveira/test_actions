@@ -85,6 +85,7 @@ jobs:
             else
               echo "::error::Could not find branch $branch in repository."
               exit 1
+            fi
           done
 
           # Check that branches with the cherry-picked commits have not been pushed to the remote yet
@@ -94,6 +95,7 @@ jobs:
             else
               echo "::error::Could not find branch $branch in repository."
               exit 1
+            fi
           done
   
   open_pr:
