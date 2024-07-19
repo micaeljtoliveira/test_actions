@@ -129,13 +129,14 @@ jobs:
           new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
           git checkout -b $new_branch origin/${{ matrix.branch }}
           git cherry-pick ${{ needs.process_comment.outputs.commits }}
+          echo "new_branch=$new_branch" >> $GITHUB_OUTPUT
           
       - name: Open pull request
         id: open_pr
         run: |
-          git push --set-upstream origin $new_branch
+          git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
           url=$(gh pr create -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
-            -b "Cherry-picking commits ${{ needs.process_commebt.outputs.commits }} from #${{ github.event.issue.number }} into ${{ matrix.branch }}.")
+            -b "Cherry-picking commits ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into ${{ matrix.branch }}.")
           echo "pr_url=$url" >> $GITHUB_OUTPUT
 
       - name: Manual cherry-pick instructions
@@ -146,7 +147,7 @@ jobs:
             This usually happens when cherry-picking results in a conflic or an empty commit.
             To fix this, checkout the branch locally and cherry-pick the commits:
             ```console
-            git checkout cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
+            git checkout ${{ steps.cherry-pick.outputs.new_branch }}
             git cherry-pick ${{ needs.process_comment.outputs.commits }}
             ```
           EOM
