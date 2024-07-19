@@ -109,7 +109,7 @@ jobs:
       pull-requests: write
     strategy:
       matrix:
-        branch: ${{ fromJson(needs.process_command.outputs.branch_matrix) }}
+        branch: ${{ fromJson(needs.process_cherry-pick_command.outputs.branch_matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
