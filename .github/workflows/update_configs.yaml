@@ -14,11 +14,12 @@ jobs:
       branch_matrix: ${{ steps.command.outputs.branch_matrix }}
     steps:
       - name: Parse cherry-pick command
+        # TODO: make this step into a separate job, so that we can handle more than one command per comment
         id: command
         shell: bash
         run: |
           set -f
-          command=($(echo "${{ github.event.comment.body }}" | grep cherry-pick))
+          command=($(echo "${{ github.event.comment.body }}" | grep -m 1 cherry-pick))
           command=("${command[@]:1}")
 
           has_separator=false
@@ -57,9 +58,9 @@ jobs:
 
       - name: Sanity checks
         run: |
-          # We want to avoid a situation where some pull requests are opened 
-          # Here we do all possible sanity checks so that we can avoid failing after some pull requests 
-          # Otherwise and avoid creating new pull requests
+          # Ideally we want all pull requests opened from a given command to be correct and successfull, so that
+          # developers don't have to reissue a cherry-pick command for a subset of the commits/branches.
+          # Therefore, we do all possible sanity checks here, before any pull request is opended.
         
           # Check if PR has been merged
           if [[ "${{ github.event.issue.pull_request.merged_at }}" == "" ]]; then
@@ -110,7 +111,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # We need the history of all branches for sanity checks
+          # We need the history of all branches
           fetch-depth: 0
  
       - name: Cherry-pick commits
@@ -122,8 +123,18 @@ jobs:
         
           new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
           git checkout -b $new_branch ${{ matrix.branch }}
-          git cherry-pick ${{ needs.process_command.outputs.commits }}
-          git push --set-upstream origin $new_branch 
+          if git cherry-pick ${{ needs.process_command.outputs.commits }}; then
+            git push --set-upstream origin $new_branch
+            gh pr create -t "Cherry-pick commits from #${{ github.event.issue.number }}" -b "Cherry-picking commits ${{ needs.process_command.outputs.commits }} into ${{ matrix.branch }}."
+          else
+            echo "::error::Cherry-picking failed."
+            exit 1
+          fi
+          
+          # If cherry-pick generates an empty commit: that's fine, simply skip the creation of the PR
+          # If cherry-pick generates a conflict: push the branch without the commits to cherry-pick, open a PR and add a comment to it providing detailed instructions on how to reproduce the cherry-pick conflict. 
+
+
 
 #      - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
