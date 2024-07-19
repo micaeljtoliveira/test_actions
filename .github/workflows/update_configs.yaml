@@ -122,7 +122,7 @@ jobs:
           git config user.email micael.oliveira@anu.edu.au
         
           new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
-          git checkout -b $new_branch ${{ matrix.branch }}
+          git checkout -b $new_branch origin/${{ matrix.branch }}
           if git cherry-pick ${{ needs.process_command.outputs.commits }}; then
             git push --set-upstream origin $new_branch
             gh pr create -t "Cherry-pick commits from #${{ github.event.issue.number }}" -b "Cherry-picking commits ${{ needs.process_command.outputs.commits }} into ${{ matrix.branch }}."
