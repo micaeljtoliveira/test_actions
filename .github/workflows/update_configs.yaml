@@ -133,6 +133,8 @@ jobs:
           
       - name: Open pull request
         id: open_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
           url=$(gh pr create -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
