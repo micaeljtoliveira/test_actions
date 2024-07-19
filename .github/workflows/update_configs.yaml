@@ -127,9 +127,11 @@ jobs:
           git config user.email micael.oliveira@anu.edu.au
         
           new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
+          echo "new_branch=$new_branch" >> $GITHUB_OUTPUT
+
           git checkout -b $new_branch origin/${{ matrix.branch }}
           git cherry-pick ${{ needs.process_comment.outputs.commits }}
-          echo "new_branch=$new_branch" >> $GITHUB_OUTPUT
+
           
       - name: Open pull request
         id: open_pr
