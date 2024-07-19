@@ -96,7 +96,7 @@ jobs:
               echo "No previous attempt to cherry-pick commits from this PR into branch $branch found."
             else
               echo "::error::Found branch $new_branch in repository."
-              echo "::error::It seems threre was a previous attempt to cherry-pick commits from this PR into branch $branch."
+              echo "::error::It seems there was a previous attempt to cherry-pick commits from this PR into branch $branch."
               exit 1
             fi
           done
