@@ -5,7 +5,7 @@ on:
     types: [created]
 
 jobs:
-  process_cherry-pick_comment:
+  process_comment:
     if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'cherry-pick')
     runs-on: ubuntu-latest
     outputs:
@@ -109,7 +109,7 @@ jobs:
       pull-requests: write
     strategy:
       matrix:
-        branch: ${{ fromJson(needs.process_cherry-pick_command.outputs.branch_matrix) }}
+        branch: ${{ fromJson(needs.process_comment.outputs.branch_matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -128,26 +128,26 @@ jobs:
         
           new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
           git checkout -b $new_branch origin/${{ matrix.branch }}
-          git cherry-pick ${{ needs.process_command.outputs.commits }}
+          git cherry-pick ${{ needs.process_comment.outputs.commits }}
           
       - name: Open pull request
         id: open_pr
         run: |
           git push --set-upstream origin $new_branch
           url=$(gh pr create -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
-            -b "Cherry-picking commits ${{ needs.process_command.outputs.commits }} from #${{ github.event.issue.number }} into ${{ matrix.branch }}.")
+            -b "Cherry-picking commits ${{ needs.process_commebt.outputs.commits }} from #${{ github.event.issue.number }} into ${{ matrix.branch }}.")
           echo "pr_url=$url" >> $GITHUB_OUTPUT
 
       - name: Manual cherry-pick instructions
         if: steps.cherry-pick.outcome == 'failure'
         run: |
           read -r -d '' body <<- EOM
-            Git cherry-picking failed for commits ${{ needs.process_command.outputs.commits }}
+            Git cherry-picking failed for commits ${{ needs.process_comment.outputs.commits }}
             This usually happens when cherry-picking results in a conflic or an empty commit.
             To fix this, checkout the branch locally and cherry-pick the commits:
             ```console
             git checkout cherry_pick_from_pr${{ github.event.issue.number }}_into_${{ matrix.branch }}
-            git cherry-pick ${{ needs.process_command.outputs.commits }}
+            git cherry-pick ${{ needs.process_comment.outputs.commits }}
             ```
           EOM
           gh pr comment ${{ steps.open_pr.outputs.pr_url }} --body "$body"
