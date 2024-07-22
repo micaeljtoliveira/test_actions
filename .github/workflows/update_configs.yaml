@@ -154,25 +154,25 @@ jobs:
             This usually happens when cherry-picking results in a conflic or an empty commit.
             To manually cherry-pick the commits and open a pull request, please follow these instructions:
             1. Create new branch from target branch:
-            console
+            \`\`\`console
             git checkout origin/${{ matrix.branch }}
             git pull
             git checkout -b ${{ steps.cherry-pick.outputs.new_branch }}
-            
+            \`\`\`
             2. Cherry-pick commits:
-            console
+            \`\`\`console
             git cherry-pick ${{ needs.process_comment.outputs.commits }}
-            
+            \`\`\`
             3. Fix any conflicts and/or empty commits by following the instructions provided by Git.
             4. Push the new branch:
-            console
+            \`\`\`console
             git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
-            
+            \`\`\`
             5. Open a new pull request on github making sure the target branch is set to ${{ matrix.branch }}.
           EOM
           )
           echo "$body"
-          #gh pr comment ${{ github.event.issue.number }} --body "$body"
+          gh pr comment ${{ github.event.issue.number }} --body "$body"
     
 #      - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
