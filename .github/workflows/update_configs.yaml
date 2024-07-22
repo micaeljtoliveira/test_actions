@@ -60,8 +60,8 @@ jobs:
         run: |
           # Ideally we want all pull requests opened from a given command to be correct and successfull, so that
           # developers don't have to reissue a cherry-pick command for a subset of the commits/branches.
-          # Therefore, we do all possible sanity checks here, before any pull request is opended.
-        
+          # Therefore, we do all possible sanity checks here, before any pull request is opened.
+
           # Check if PR has been merged
           if [[ "${{ github.event.issue.pull_request.merged_at }}" == "" ]]; then
             echo "::error::Pull request has not been merged yet. Cannot cherry-pick commits."
@@ -97,6 +97,8 @@ jobs:
             else
               echo "::error::Found branch $new_branch in repository."
               echo "::error::It seems there was a previous attempt to cherry-pick commits from this PR into branch $branch."
+              echo "::error::If the current cherry-pick attempt is for a different set of commits, make sure that"
+              echo "::error::the previous attempt is fully merged and that the corresponding branch has been deleted."
               exit 1
             fi
           done
@@ -132,8 +134,8 @@ jobs:
           git checkout -b $new_branch origin/${{ matrix.branch }}
           git cherry-pick ${{ needs.process_comment.outputs.commits }}
 
-          
       - name: Open pull request
+        if: steps.cherry-pick.outcome == 'success'
         id: open_pr
         env:
           GH_TOKEN: ${{ github.token }}
@@ -147,13 +149,25 @@ jobs:
         if: steps.cherry-pick.outcome == 'failure'
         run: |
           read -r -d '' body <<- EOM
-            Git cherry-picking failed for commits ${{ needs.process_comment.outputs.commits }}
+            Automatic Git cherry-picking failed for commits ${{ needs.process_comment.outputs.commits }}
             This usually happens when cherry-picking results in a conflic or an empty commit.
-            To fix this, checkout the branch locally and cherry-pick the commits:
+            To manually cherry-pick the commits and open a pull request, please follow these instructions:
+            1. Create new branch from target branch:
             ```console
-            git checkout ${{ steps.cherry-pick.outputs.new_branch }}
+            git checkout origin/${{ matrix.branch }}
+            git pull
+            git checkout -b ${{ steps.cherry-pick.outputs.new_branch }}
+            ```
+            2. Cherry-pick commits:
+            ```console
             git cherry-pick ${{ needs.process_comment.outputs.commits }}
             ```
+            3. Fix any conflicts and/or empty commits by following the instructions provided by Git.
+            4. Push the new branch:
+            ```console
+            git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
+            ```
+            5. Open a new pull request on github making sure the target branch is set to ${{ matrix.branch }}.
           EOM
           gh pr comment ${{ steps.open_pr.outputs.pr_url }} --body "$body"
     
