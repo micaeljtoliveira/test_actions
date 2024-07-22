@@ -147,6 +147,7 @@ jobs:
 
       - name: Manual cherry-pick instructions
         if: steps.cherry-pick.outcome == 'failure'
+        shell: bash
         run: |
           read -r -d '' body <<- EOM
             Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into branch ${{ matrix.branch }} failed.
