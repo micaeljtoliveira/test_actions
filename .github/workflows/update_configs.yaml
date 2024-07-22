@@ -148,6 +148,8 @@ jobs:
       - name: Manual cherry-pick instructions
         if: steps.cherry-pick.outcome == 'failure'
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           body=$(cat <<- EOM
             Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into branch ${{ matrix.branch }} failed.
