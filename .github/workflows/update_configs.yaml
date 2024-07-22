@@ -171,7 +171,7 @@ jobs:
             5. Open a new pull request on github making sure the target branch is set to ${{ matrix.branch }}.
           EOM
           echo "$body"
-          gh pr comment ${{ github.event.issue.number }} --body "$body"
+          #gh pr comment ${{ github.event.issue.number }} --body "$body"
     
 #      - name: Checkout PR
         # Since this is triggerd by a comment, the checkout repository step will
