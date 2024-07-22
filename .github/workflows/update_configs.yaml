@@ -144,6 +144,20 @@ jobs:
           url=$(gh pr create -B ${{ matrix.branch }} -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
             -b "Cherry-picking commits ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into ${{ matrix.branch }}.")
           echo "pr_url=$url" >> $GITHUB_OUTPUT
+          
+      - name: Report success
+        if: steps.cherry-pick.outcome == 'success'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          body=$(cat <<- EOM
+            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into branch ${{ matrix.branch }} was a success.
+            
+            The new pull request can be reviewed and approved [here](${{ steps.open_pr.outputs.pr_url }}). 
+          EOM
+          )
+          gh pr comment ${{ github.event.issue.number }} --body "$body"
 
       - name: Manual cherry-pick instructions
         if: steps.cherry-pick.outcome == 'failure'
@@ -173,7 +187,6 @@ jobs:
             5. Open a new pull request on github making sure the target branch is set to ${{ matrix.branch }}.
           EOM
           )
-          echo "$body"
           gh pr comment ${{ github.event.issue.number }} --body "$body"
     
 #      - name: Checkout PR
