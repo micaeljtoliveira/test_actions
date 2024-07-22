@@ -166,9 +166,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           body=$(cat <<- EOM
-            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into branch ${{ matrix.branch }} failed.
-            This usually happens when cherry-picking results in a conflic or an empty commit.
-            To manually cherry-pick the commits and open a pull request, please follow these instructions:
+            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into branch ${{ matrix.branch }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
             1. Create new branch from target branch:
             \`\`\`console
             git checkout origin/${{ matrix.branch }}
