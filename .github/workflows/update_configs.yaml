@@ -117,7 +117,7 @@ jobs:
             fi
           done
           if [[ -n "$missing_commits" ]]; then
-            message="Could not find commits $missing_commits in [$target](${{ github.repositoryUrl }}/tree/$target)."
+            message="Could not find commit(s) $missing_commits in [$target](${{ github.repositoryUrl }}/tree/$target)."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
             
             Automatic cherry-pick failed. $message"
@@ -139,7 +139,7 @@ jobs:
             fi
           done
           if [[ -n "$missing_branches" ]]; then
-            message="Could not find branches $missing_branches in repository."
+            message="Could not find branch(es) $missing_branches in repository."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
             
             Automatic cherry-pick failed. $message"
@@ -162,7 +162,7 @@ jobs:
             fi
           done
           if [[ -n "$duplicated_branches" ]]; then
-            message="It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branches:"
+            message="It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
             for branch in $duplicated_branches; do
               message="$message\n  $branch"
             done
@@ -216,7 +216,7 @@ jobs:
           #git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
           target_link="\[${{ matrix.branch }}\](${{ github.repositoryUrl }}/tree/${{ matrix.branch }})
           url=$(gh pr create -B ${{ matrix.branch }} -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
-            -b "Cherry-picking commits ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into $target_link.")
+            -b "Cherry-picking commit(s) ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into $target_link.")
           echo "pr_url=$url" >> $GITHUB_OUTPUT
           echo "target_link=$target_link" >> $GITHUB_OUTPUT
   
@@ -227,7 +227,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           body=$(cat <<- EOM
-            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} was successful.
+            Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} was successful.
             
             The new pull request can be reviewed and approved [here](${{ steps.open_pr.outputs.pr_url }}). 
           EOM
@@ -241,7 +241,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           body=$(cat <<- EOM
-            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
+            Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
             1. Create new branch from target branch:
             \`\`\`console
             git checkout ${{ matrix.branch }}
