@@ -6,6 +6,10 @@ on:
 
 jobs:
   process_comment:
+    # This job will parse the cherry-pick command and perform several sanity checks.
+    # Ideally we want all pull requests opened from a given command to be correct and successfull, so that
+    # developers don't have to reissue a cherry-pick command for a subset of the commits/branches.
+    # Therefore, we do all possible sanity checks in this job, before any pull request is opened in subsequent jobs.
     if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'cherry-pick')
     runs-on: ubuntu-latest
     outputs:
@@ -38,8 +42,27 @@ jobs:
               fi
             fi
           done
-          if [ "$has_separator" = false ]; then
-            echo "::error::Syntax error in cherry-pick command: missing separator."
+
+          # Check command correctness
+          errors=""
+          if [[ "$has_separator" = false ]]; then
+            errors="$errors\n - the command is missing the \`into\` separator"
+          fi
+          if [[ -n "$commits" ]]; then
+            errors="$errors\n - no list of commits to cherry-pick was provided"
+          fi          
+          if [[ -n "$branches" ]]; then
+            errors="$errors\n - no list of target branches was provided"
+          fi          
+          if [[ -n "$errors" ]; then
+            message="Incorrect cherry-pick command:"            
+            for error in $errors; do
+              message="$message\n$error"
+            done
+            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            while IFS= read -r line; do
+              echo "::error::$line"
+            done <<< "$message"
             exit 1
           fi
 
@@ -53,55 +76,80 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # We need the history of all branches for sanity checks
+          # We need the history of all branches for the sanity checks
           fetch-depth: 0
 
-      - name: Sanity checks
+      - name: Check PR status
         run: |
-          # Ideally we want all pull requests opened from a given command to be correct and successfull, so that
-          # developers don't have to reissue a cherry-pick command for a subset of the commits/branches.
-          # Therefore, we do all possible sanity checks here, before any pull request is opened.
-
-          # Check if PR has been merged
-          if [[ "${{ github.event.issue.pull_request.merged_at }}" == "" ]]; then
-            echo "::error::Pull request has not been merged yet. Cannot cherry-pick commits."
+          # Check if the PR has been merged
+          if [[ -n "${{ github.event.issue.pull_request.merged_at }}" ]]; then
+            message="Pull request has not been merged yet. Cannot cherry-pick commits."
+            gh pr comment ${{ github.event.issue.number }} --body "$message"
+            echo "::error::$message"
             exit 1
           fi
 
+      - name: Check commits
+        run: |
           # Check that the commits to cherry-pick are actually part of this PRs target branch
           target=$(gh api repos/{owner}/{repo}/pulls/${{ github.event.issue.number }} -q .base.ref)
+          missing_commits=""
           for commit in ${{ steps.command.outputs.commits }}; do
             if git merge-base --is-ancestor ${commit} origin/$target; then 
               echo "Commit $commit found in $target branch."
             else
-              echo "::error::Could not find commit $commit in $target branch."
-              exit 1
+              missing_commits="$missing_commits $commit"
             fi
           done
+          if [[ -n "$missing_commits" ]]; then
+            message="Could not find commits $missing_commits in $target branch."
+            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            echo "::error::$message"
+            exit 1
+          fi
 
+      - name: Check target branches
+        run: |
           # Check that cherry-pick target branches actually exist
+          missing_branches=""
           for branch in ${{ steps.command.outputs.branches }}; do
             if [[ -n "$(git ls-remote --heads origin ${branch})" ]]; then
               echo "Found branch $branch in repository."
             else
-              echo "::error::Could not find branch $branch in repository."
-              exit 1
+              missing_branches="$missing_branches $branch"
             fi
           done
-
+          if [[ -n "$missing_branches" ]]; then
+            message="Could not find branches $missing_branches in repository."
+            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            echo "::error::$message"
+            exit 1
+          fi
+        
+      - name: Check previous cherry-picks
+        run: |
           # Check that branches with the cherry-picked commits have not been pushed to the remote yet
+          duplicated_branches=""
           for branch in ${{ steps.command.outputs.branches }}; do
             new_branch=cherry_pick_from_pr${{ github.event.issue.number }}_into_$branch
             if [[ -z "$(git ls-remote --heads origin $new_branch)" ]]; then
               echo "No previous attempt to cherry-pick commits from this PR into branch $branch found."
             else
-              echo "::error::Found branch $new_branch in repository."
-              echo "::error::It seems there was a previous attempt to cherry-pick commits from this PR into branch $branch."
-              echo "::error::If the current cherry-pick attempt is for a different set of commits, make sure that"
-              echo "::error::the previous attempt is fully merged and that the corresponding branch has been deleted."
-              exit 1
+              duplicated_branches="$duplicated_branches $branch"
             fi
           done
+          if [[ -n "$duplicated_branches" ]]; then
+            message="It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branches:"
+            for branch in $duplicated_branches; do
+              message="$message\n  $branch"
+            done
+            $message="$message\nIf the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
+            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            while IFS= read -r line; do
+              echo "::error::$line"
+            done <<< "$message"
+            exit 1
+          fi
   
   create_pr:
     runs-on: ubuntu-latest 
@@ -140,11 +188,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
+          #git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
+          target_link="\[${{ matrix.branch }}\](${{ github.repositoryUrl }}/tree/${{ matrix.branch }})
           url=$(gh pr create -B ${{ matrix.branch }} -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
-            -b "Cherry-picking commits ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into ${{ matrix.branch }}.")
+            -b "Cherry-picking commits ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into $target_link.")
           echo "pr_url=$url" >> $GITHUB_OUTPUT
-          
+          echo "target_link=$target_link" >> $GITHUB_OUTPUT
+  
       - name: Report success
         if: steps.cherry-pick.outcome == 'success'
         shell: bash
@@ -152,7 +202,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           body=$(cat <<- EOM
-            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into branch ${{ matrix.branch }} was a success.
+            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} was successful.
             
             The new pull request can be reviewed and approved [here](${{ steps.open_pr.outputs.pr_url }}). 
           EOM
@@ -166,10 +216,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           body=$(cat <<- EOM
-            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into branch ${{ matrix.branch }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
+            Automatic Git cherry-picking of commits ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
             1. Create new branch from target branch:
             \`\`\`console
-            git checkout origin/${{ matrix.branch }}
+            git checkout ${{ matrix.branch }}
             git pull
             git checkout -b ${{ steps.cherry-pick.outputs.new_branch }}
             \`\`\`
