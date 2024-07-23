@@ -59,10 +59,10 @@ jobs:
           if [[ "$has_separator" = false ]]; then
             errors="$errors\n - the command is missing the \`into\` separator"
           fi
-          if [[ -n "$commits" ]]; then
+          if [[ -z "$commits" ]]; then
             errors="$errors\n - no list of commits to cherry-pick was provided"
           fi          
-          if [[ -n "$branches" ]]; then
+          if [[ -z "$branches" ]]; then
             errors="$errors\n - no list of target branches was provided"
           fi          
           if [[ -n "$errors" ]]; then
@@ -73,7 +73,7 @@ jobs:
             gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
             while IFS= read -r line; do
               echo "::error::$line"
-            done <<< "$message"
+            done <<< $message
             exit 1
           fi
 
