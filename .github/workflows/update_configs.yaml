@@ -54,7 +54,7 @@ jobs:
           if [[ -n "$branches" ]]; then
             errors="$errors\n - no list of target branches was provided"
           fi          
-          if [[ -n "$errors" ]; then
+          if [[ -n "$errors" ]]; then
             message="Incorrect cherry-pick command:"            
             for error in $errors; do
               message="$message\n$error"
