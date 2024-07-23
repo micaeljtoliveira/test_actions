@@ -12,6 +12,9 @@ jobs:
     # Therefore, we do all possible sanity checks in this job, before any pull request is opened in subsequent jobs.
     if: github.event.issue.pull_request != '' && contains(github.event.comment.body, 'cherry-pick')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       commits: ${{ steps.command.outputs.commits }}
       branches: ${{ steps.command.outputs.branches }}
