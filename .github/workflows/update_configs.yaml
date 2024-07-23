@@ -71,11 +71,8 @@ jobs:
           "
           fi          
           if [[ -n "$errors" ]]; then
-            message="Incorrect cherry-pick command:"            
-            for error in $errors; do
-              message="$message
-            $error"
-            done
+            message="Incorrect cherry-pick command:
+          $error"
             gh pr comment ${{ github.event.issue.number }} --body "> $command_string
           
           Automatic cherry-pick failed. $message"
