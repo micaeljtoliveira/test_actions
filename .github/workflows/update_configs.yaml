@@ -73,6 +73,7 @@ jobs:
               message="$message\n$error"
             done
             gh pr comment ${{ github.event.issue.number }} --body "> $command_string
+            
             Automatic cherry-pick failed. $message"
             while IFS= read -r line; do
               echo "::error::$line"
@@ -95,6 +96,7 @@ jobs:
           if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
             message="Pull request has not been merged yet. Cannot cherry-pick commits."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
+            
             $message"
             echo "::error::$message"
             exit 1
@@ -116,7 +118,9 @@ jobs:
           done
           if [[ -n "$missing_commits" ]]; then
             message="Could not find commits $missing_commits in [$target](${{ github.repositoryUrl }}/tree/$target)."
-            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
+            
+            Automatic cherry-pick failed. $message"
             echo "::error::$message"
             exit 1
           fi
@@ -136,7 +140,9 @@ jobs:
           done
           if [[ -n "$missing_branches" ]]; then
             message="Could not find branches $missing_branches in repository."
-            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
+            
+            Automatic cherry-pick failed. $message"
             echo "::error::$message"
             exit 1
           fi
@@ -161,7 +167,9 @@ jobs:
               message="$message\n  $branch"
             done
             $message="$message\nIf the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
-            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
+            
+            Automatic cherry-pick failed. $message"
             while IFS= read -r line; do
               echo "::error::$line"
             done <<< "$message"
