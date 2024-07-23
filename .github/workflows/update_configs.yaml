@@ -19,7 +19,7 @@ jobs:
       commits: ${{ steps.command.outputs.commits }}
       branches: ${{ steps.command.outputs.branches }}
       branch_matrix: ${{ steps.command.outputs.branch_matrix }}
-    steps:          
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -34,7 +34,9 @@ jobs:
         shell: bash
         run: |
           set -f
-          command=($(echo "${{ github.event.comment.body }}" | grep -m 1 cherry-pick))
+          command_string=$(echo "${{ github.event.comment.body }}" | grep -m 1 cherry-pick)
+          echo "command=$comand_string" >> $GITHUB_OUTPUT
+          command=($command_string)
           command=("${command[@]:1}")
 
           has_separator=false
@@ -70,7 +72,7 @@ jobs:
             for error in $errors; do
               message="$message\n$error"
             done
-            gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
+            gh pr comment ${{ github.event.issue.number }} --body "> $command_string\nAutomatic cherry-pick failed. $message"
             while IFS= read -r line; do
               echo "::error::$line"
             done <<< $message
@@ -90,7 +92,7 @@ jobs:
         run: |
           # Check if the PR has been merged
           if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
-            message="Pull request has not been merged yet. Cannot cherry-pick commits."
+            message="> ${{ steps.command.outputs.command }}\nPull request has not been merged yet. Cannot cherry-pick commits."
             gh pr comment ${{ github.event.issue.number }} --body "$message"
             echo "::error::$message"
             exit 1
