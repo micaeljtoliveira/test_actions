@@ -16,7 +16,13 @@ jobs:
       commits: ${{ steps.command.outputs.commits }}
       branches: ${{ steps.command.outputs.branches }}
       branch_matrix: ${{ steps.command.outputs.branch_matrix }}
-    steps:
+    steps:          
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # We need the history of all branches for the sanity checks
+          fetch-depth: 0
+
       - name: Parse cherry-pick command
         # TODO: make this step into a separate job, so that we can handle more than one command per comment
         id: command
@@ -74,12 +80,6 @@ jobs:
 
           # We also output the list of branches as json, so they can be used to generate a matrix for the next job 
           echo "branch_matrix=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
-      
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          # We need the history of all branches for the sanity checks
-          fetch-depth: 0
 
       - name: Check PR status
         env:
