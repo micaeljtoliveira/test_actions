@@ -20,6 +20,8 @@ jobs:
       - name: Parse cherry-pick command
         # TODO: make this step into a separate job, so that we can handle more than one command per comment
         id: command
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -f
@@ -80,6 +82,8 @@ jobs:
           fetch-depth: 0
 
       - name: Check PR status
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Check if the PR has been merged
           if [[ -n "${{ github.event.issue.pull_request.merged_at }}" ]]; then
@@ -90,6 +94,8 @@ jobs:
           fi
 
       - name: Check commits
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Check that the commits to cherry-pick are actually part of this PRs target branch
           target=$(gh api repos/{owner}/{repo}/pulls/${{ github.event.issue.number }} -q .base.ref)
@@ -109,6 +115,8 @@ jobs:
           fi
 
       - name: Check target branches
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Check that cherry-pick target branches actually exist
           missing_branches=""
@@ -127,6 +135,8 @@ jobs:
           fi
         
       - name: Check previous cherry-picks
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Check that branches with the cherry-picked commits have not been pushed to the remote yet
           duplicated_branches=""
@@ -150,7 +160,7 @@ jobs:
             done <<< "$message"
             exit 1
           fi
-  
+
   create_pr:
     runs-on: ubuntu-latest 
     needs: process_comment
