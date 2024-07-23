@@ -35,7 +35,7 @@ jobs:
         run: |
           set -f
           command_string=$(echo "${{ github.event.comment.body }}" | grep -m 1 cherry-pick)
-          echo "command=$comand_string" >> $GITHUB_OUTPUT
+          echo "command=$command_string" >> $GITHUB_OUTPUT
           command=($command_string)
           command=("${command[@]:1}")
 
