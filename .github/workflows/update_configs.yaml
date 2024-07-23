@@ -89,7 +89,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # Check if the PR has been merged
-          if [[ -n "${{ github.event.issue.pull_request.merged_at }}" ]]; then
+          if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
             message="Pull request has not been merged yet. Cannot cherry-pick commits."
             gh pr comment ${{ github.event.issue.number }} --body "$message"
             echo "::error::$message"
@@ -111,7 +111,7 @@ jobs:
             fi
           done
           if [[ -n "$missing_commits" ]]; then
-            message="Could not find commits $missing_commits in $target branch."
+            message="Could not find commits $missing_commits in [$target](${{ github.repositoryUrl }}/tree/$target)."
             gh pr comment ${{ github.event.issue.number }} --body "Automatic cherry-pick failed. $message"
             echo "::error::$message"
             exit 1
