@@ -72,7 +72,8 @@ jobs:
             for error in $errors; do
               message="$message\n$error"
             done
-            gh pr comment ${{ github.event.issue.number }} --body "> $command_string\nAutomatic cherry-pick failed. $message"
+            gh pr comment ${{ github.event.issue.number }} --body "> $command_string
+            Automatic cherry-pick failed. $message"
             while IFS= read -r line; do
               echo "::error::$line"
             done <<< $message
@@ -92,8 +93,9 @@ jobs:
         run: |
           # Check if the PR has been merged
           if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
-            message="> ${{ steps.command.outputs.command }}\nPull request has not been merged yet. Cannot cherry-pick commits."
-            gh pr comment ${{ github.event.issue.number }} --body "$message"
+            message="Pull request has not been merged yet. Cannot cherry-pick commits."
+            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
+            $message"
             echo "::error::$message"
             exit 1
           fi
