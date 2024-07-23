@@ -59,22 +59,26 @@ jobs:
           # Check command correctness
           errors=""
           if [[ "$has_separator" = false ]]; then
-            errors="$errors\n - the command is missing the \`into\` separator"
+            errors="$errors - the command is missing the \`into\` separator
+          "
           fi
           if [[ -z "$commits" ]]; then
-            errors="$errors\n - no list of commits to cherry-pick was provided"
+            errors="$errors - no list of commits to cherry-pick was provided
+          "
           fi          
           if [[ -z "$branches" ]]; then
-            errors="$errors\n - no list of target branches was provided"
+            errors="$errors - no list of target branches was provided
+          "
           fi          
           if [[ -n "$errors" ]]; then
             message="Incorrect cherry-pick command:"            
             for error in $errors; do
-              message="$message\n$error"
+              message="$message
+            $error"
             done
             gh pr comment ${{ github.event.issue.number }} --body "> $command_string
-            
-            Automatic cherry-pick failed. $message"
+          
+          Automatic cherry-pick failed. $message"
             while IFS= read -r line; do
               echo "::error::$line"
             done <<< $message
