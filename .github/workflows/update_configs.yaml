@@ -69,7 +69,7 @@ jobs:
           fi
 
           # Check that the commits to cherry-pick are actually part of this PRs target branch
-          target=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" | jq -r .base.ref)
+          target=$(gh api repos/{owner}/{repo}/pulls/${{ github.event.issue.number }} -q .base.ref)
           for commit in ${{ steps.command.outputs.commits }}; do
             if git merge-base --is-ancestor ${commit} origin/$target; then 
               echo "Commit $commit found in $target branch."
