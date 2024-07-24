@@ -65,20 +65,17 @@ jobs:
           if [[ -z "$commits" ]]; then
             errors="$errors - no list of commits to cherry-pick was provided
           "
-          fi          
+          fi
           if [[ -z "$branches" ]]; then
             errors="$errors - no list of target branches was provided
           "
-          fi          
+          fi
           if [[ -n "$errors" ]]; then
-            message="Incorrect cherry-pick command:
-          $errors"
-            gh pr comment ${{ github.event.issue.number }} --body "> $command_string
+            message="> $command_string
           
-          Automatic cherry-pick failed. $message"
-            while IFS= read -r line; do
-              echo "::error::$line"
-            done <<< $message
+          Automatic cherry-pick failed. Incorrect cherry-pick command:
+          $errors"
+            gh pr comment ${{ github.event.issue.number }} --body "$message"
             exit 1
           fi
 
@@ -86,7 +83,7 @@ jobs:
           echo "commits=${commits[@]}" >> $GITHUB_OUTPUT
           echo "branches=${branches[@]}" >> $GITHUB_OUTPUT
 
-          # We also output the list of branches as json, so they can be used to generate a matrix for the next job 
+          # We also output the list of branches as json, so they can be used to generate a matrix for the next job
           echo "branch_matrix=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
 
       - name: Check PR status
@@ -95,11 +92,10 @@ jobs:
         run: |
           # Check if the PR has been merged
           if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
-            message="Pull request has not been merged yet. Cannot cherry-pick commits."
-            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
-          
-          $message"
-            echo "::error::$message"
+            message="> ${{ steps.command.outputs.command }}
+            
+          Pull request has not been merged yet. Cannot cherry-pick commits."
+            gh pr comment ${{ github.event.issue.number }} --body "$message"
             exit 1
           fi
 
@@ -114,15 +110,14 @@ jobs:
             if git merge-base --is-ancestor ${commit} origin/$target; then 
               echo "Commit $commit found in $target branch."
             else
-              missing_commits="$missing_commits $commit"
+              missing_commits="$missing_commits \`$commit\`"
             fi
           done
           if [[ -n "$missing_commits" ]]; then
-            message="Could not find commit(s) $missing_commits in [$target](${{ github.repositoryUrl }}/tree/$target)."
-            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
+            message="> ${{ steps.command.outputs.command }}
           
-          Automatic cherry-pick failed. $message"
-            echo "::error::$message"
+          Automatic cherry-pick failed. Could not find commit(s) $missing_commits in [$target](${{ github.repositoryUrl }}/tree/$target)."
+            gh pr comment ${{ github.event.issue.number }} --body "$message"
             exit 1
           fi
 
@@ -136,15 +131,14 @@ jobs:
             if [[ -n "$(git ls-remote --heads origin ${branch})" ]]; then
               echo "Found branch $branch in repository."
             else
-              missing_branches="$missing_branches $branch"
+              missing_branches="$missing_branches \`$branch\`"
             fi
           done
           if [[ -n "$missing_branches" ]]; then
-            message="Could not find branch(es) $missing_branches in repository."
-            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
-          
-          Automatic cherry-pick failed. $message"
-            echo "::error::$message"
+            message="> ${{ steps.command.outputs.command }}
+            
+          Automatic cherry-pick failed. Could not find branch(es) $missing_branches in repository."
+            gh pr comment ${{ github.event.issue.number }} --body "$message"
             exit 1
           fi
         
@@ -163,7 +157,9 @@ jobs:
             fi
           done
           if [[ -n "$duplicated_branches" ]]; then
-            message="It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
+            message="> ${{ steps.command.outputs.command }}
+          
+          Automatic cherry-pick failed. It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
             for branch in $duplicated_branches; do
               message="$message
            - [$branch](https://${{ github.repository }}/tree/$branch)"
@@ -171,12 +167,7 @@ jobs:
             message="$message
           
           If the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
-            gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
-          
-          Automatic cherry-pick failed. $message"
-            while IFS= read -r line; do
-              echo "::error::$line"
-            done <<< "$message"
+            gh pr comment ${{ github.event.issue.number }} --body "$message"
             exit 1
           fi
 
