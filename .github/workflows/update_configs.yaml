@@ -97,8 +97,8 @@ jobs:
           if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
             message="Pull request has not been merged yet. Cannot cherry-pick commits."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
-            
-            $message"
+          
+          $message"
             echo "::error::$message"
             exit 1
           fi
@@ -120,8 +120,8 @@ jobs:
           if [[ -n "$missing_commits" ]]; then
             message="Could not find commit(s) $missing_commits in [$target](${{ github.repositoryUrl }}/tree/$target)."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
-            
-            Automatic cherry-pick failed. $message"
+          
+          Automatic cherry-pick failed. $message"
             echo "::error::$message"
             exit 1
           fi
@@ -142,8 +142,8 @@ jobs:
           if [[ -n "$missing_branches" ]]; then
             message="Could not find branch(es) $missing_branches in repository."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
-            
-            Automatic cherry-pick failed. $message"
+          
+          Automatic cherry-pick failed. $message"
             echo "::error::$message"
             exit 1
           fi
@@ -165,12 +165,14 @@ jobs:
           if [[ -n "$duplicated_branches" ]]; then
             message="It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
             for branch in $duplicated_branches; do
-              message="$message\n  $branch"
+              message="$message
+           - [$branch"](${{ github.repositoryUrl }}/tree/$branch)
             done
-            $message="$message\nIf the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
+            $message="$message
+          If the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
-            
-            Automatic cherry-pick failed. $message"
+          
+          Automatic cherry-pick failed. $message"
             while IFS= read -r line; do
               echo "::error::$line"
             done <<< "$message"
@@ -227,12 +229,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          body=$(cat <<- EOM
-            Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} was successful.
-            
-            The new pull request can be reviewed and approved [here](${{ steps.open_pr.outputs.pr_url }}). 
-          EOM
-          )
+          body="Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} was successful.
+          
+          The new pull request can be reviewed and approved [here](${{ steps.open_pr.outputs.pr_url }})."
           gh pr comment ${{ github.event.issue.number }} --body "$body"
 
       - name: Manual cherry-pick instructions
@@ -241,26 +240,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          body=$(cat <<- EOM
-            Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
-            1. Create new branch from target branch:
-            \`\`\`console
-            git checkout ${{ matrix.branch }}
-            git pull
-            git checkout -b ${{ steps.cherry-pick.outputs.new_branch }}
-            \`\`\`
-            2. Cherry-pick commits:
-            \`\`\`console
-            git cherry-pick ${{ needs.process_comment.outputs.commits }}
-            \`\`\`
-            3. Fix any conflicts and/or empty commits by following the instructions provided by Git.
-            4. Push the new branch:
-            \`\`\`console
-            git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
-            \`\`\`
-            5. Open a new pull request on github making sure the target branch is set to ${{ matrix.branch }}.
-          EOM
-          )
+          body="Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
+           1. Create new branch from target branch:
+          \`\`\`console
+          git checkout ${{ matrix.branch }}
+          git pull
+          git checkout -b ${{ steps.cherry-pick.outputs.new_branch }}
+          \`\`\`
+           2. Cherry-pick commits:
+          \`\`\`console
+          git cherry-pick ${{ needs.process_comment.outputs.commits }}
+          \`\`\`
+           3. Fix any conflicts and/or empty commits by following the instructions provided by Git.
+           4. Push the new branch:
+          \`\`\`console
+          git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
+          \`\`\`
+           5. Open a new pull request on github making sure the target branch is set to ${{ matrix.branch }}."
           gh pr comment ${{ github.event.issue.number }} --body "$body"
     
 #      - name: Checkout PR
