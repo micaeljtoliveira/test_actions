@@ -219,7 +219,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          #git push --set-upstream origin ${{ steps.info.outputs.new_branch }}
+          git push --set-upstream origin ${{ steps.info.outputs.new_branch }}
           url=$(gh pr create -B ${{ matrix.branch }} -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
             -b "Cherry-picking commit(s) ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into ${{ steps.info.outputs.target_branch_url }}.")
           echo "pr_url=$url" >> $GITHUB_OUTPUT
