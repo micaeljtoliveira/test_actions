@@ -166,9 +166,10 @@ jobs:
             message="It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
             for branch in $duplicated_branches; do
               message="$message
-           - [$branch](${{ github.repositoryUrl }}/tree/$branch)"
+           - [$branch](https://${{ github.repository }}/tree/$branch)"
             done
             message="$message
+          
           If the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
           
