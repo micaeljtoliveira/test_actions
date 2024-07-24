@@ -168,7 +168,7 @@ jobs:
               message="$message
            - [$branch](${{ github.repositoryUrl }}/tree/$branch)"
             done
-            $message="$message
+            message="$message
           If the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
             gh pr comment ${{ github.event.issue.number }} --body "> ${{ steps.command.outputs.command }}
           
