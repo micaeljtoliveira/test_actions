@@ -217,9 +217,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           #git push --set-upstream origin ${{ steps.cherry-pick.outputs.new_branch }}
-          target_link="\[${{ matrix.branch }}\](${{ github.repositoryUrl }}/tree/${{ matrix.branch }})"
           url=$(gh pr create -B ${{ matrix.branch }} -t "Cherry-pick commits from #${{ github.event.issue.number }}" \
-            -b "Cherry-picking commit(s) ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into $target_link.")
+            -b "Cherry-picking commit(s) ${{ needs.process_comment.outputs.commits }} from #${{ github.event.issue.number }} into \[${{ matrix.branch }}\](${{ github.repositoryUrl }}/tree/${{ matrix.branch }}).")
           echo "pr_url=$url" >> $GITHUB_OUTPUT
           echo "target_link=$target_link" >> $GITHUB_OUTPUT
   
@@ -229,7 +228,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          body="Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} was successful.
+          body="Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into \[${{ matrix.branch }}\](${{ github.repositoryUrl }}/tree/${{ matrix.branch }}) was successful.
           
           The new pull request can be reviewed and approved [here](${{ steps.open_pr.outputs.pr_url }})."
           gh pr comment ${{ github.event.issue.number }} --body "$body"
@@ -240,7 +239,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          body="Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into ${{ steps.open_pr.outputs.target_link }} failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
+          body="Automatic Git cherry-picking of commit(s) ${{ needs.process_comment.outputs.commits }} into \[${{ matrix.branch }}\](${{ github.repositoryUrl }}/tree/${{ matrix.branch }}) failed. This usually happens when cherry-picking results in a conflic or an empty commit. To manually cherry-pick the commits and open a pull request, please follow these instructions:
            1. Create new branch from target branch:
           \`\`\`console
           git checkout ${{ matrix.branch }}
