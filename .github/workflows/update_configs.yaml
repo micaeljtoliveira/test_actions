@@ -58,7 +58,7 @@ jobs:
           # Check command correctness
           errors=""
           if [[ "$has_separator" = false ]]; then
-            errors="$errors - the command is missing the \\`into\\` separator
+            errors="$errors - the command is missing the \`into\` separator
           "
           fi
           if [[ -z "$commits" ]]; then
@@ -123,7 +123,7 @@ jobs:
             echo "ERROR_MSG=Could not find branch(es) $missing_branches in repository." >> $GITHUB_ENV
           fi
         
-      - name: Check previous cherry-picks
+      - name: Check Previous Cherry-picks
         if: env.ERROR_MSG == ''
         run: |
           # Check that branches with the cherry-picked commits have not been pushed to the remote yet
@@ -154,7 +154,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ -n '${{ env.ERROR_MSG }}" ]]; then
+          if [[ -n '${{ env.ERROR_MSG }}' ]]; then
             body="> ${{ steps.command.outputs.command }}
           
           Automatic cherry-pick failed. ${{ env.ERROR_MSG }}"
