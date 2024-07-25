@@ -139,9 +139,7 @@ jobs:
             fi
           done
           if [[ -n "$duplicated_branches" ]]; then
-            errors="> ${{ steps.command.outputs.command }}
-          
-          Automatic cherry-pick failed. It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
+            errors="It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
             for branch in $duplicated_branches; do
               errors="$errors
            - [$branch](https://${{ github.repository }}/tree/$branch)"
