@@ -169,7 +169,7 @@ jobs:
   create_pr:
     runs-on: ubuntu-latest 
     needs: process_comment
-    if: needs.process_comment.outputs.status == "success"
+    if: needs.process_comment.outputs.status == 'success'
     permissions:
       contents: write
       pull-requests: write
