@@ -70,7 +70,7 @@ jobs:
           "
           fi
           if [[ -n "$errors" ]]; then
-            printf "ERROR_MSF<<EOF\n%s\nEOF" "Incorrect cherry-pick command:\n$errors" >> $GITHUB_ENV
+            printf "ERROR_MSG<<EOF\n%s\nEOF" "Incorrect cherry-pick command:\n$errors" >> $GITHUB_ENV
           fi
 
           # Output lists of commits and branches
@@ -90,6 +90,8 @@ jobs:
 
       - name: Check commits
         if: ${{ env.ERROR_MSG }} = ''
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Check that the commits to cherry-pick are actually part of this PRs target branch
           target=$(gh api repos/{owner}/{repo}/pulls/${{ github.event.issue.number }} -q .base.ref)
