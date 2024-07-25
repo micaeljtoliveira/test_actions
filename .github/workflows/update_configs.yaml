@@ -70,8 +70,7 @@ jobs:
           "
           fi
           if [[ -n "$errors" ]]; then
-            echo "ERROR_MSG=Incorrect cherry-pick command:
-          $errors" >> $GITHUB_ENV
+            printf "ERROR_MSF<<EOF\n%s\nEOF" "Incorrect cherry-pick command:\n$errors" >> $GITHUB_ENV
           fi
 
           # Output lists of commits and branches
