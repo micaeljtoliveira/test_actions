@@ -58,7 +58,7 @@ jobs:
           # Check command correctness
           errors=""
           if [[ "$has_separator" = false ]]; then
-            errors="$errors - the command is missing the \`into\` separator
+            errors="$errors - the command is missing the \\`into\\` separator
           "
           fi
           if [[ -z "$commits" ]]; then
@@ -89,7 +89,7 @@ jobs:
           fi
 
       - name: Check commits
-        if: (! env.ERROR_MSG)
+        if: env.ERROR_MSG == ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -154,7 +154,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ -n "${{ env.ERROR_MSG }}" ]]; then
+          if [[ -n '${{ env.ERROR_MSG }}" ]]; then
             body="> ${{ steps.command.outputs.command }}
           
           Automatic cherry-pick failed. ${{ env.ERROR_MSG }}"
