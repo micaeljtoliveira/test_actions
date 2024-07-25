@@ -192,10 +192,8 @@ jobs:
         id: cherry-pick
         continue-on-error: true
         run: |
-          #git config user.name ${{ vars.GH_ACTIONS_BOT_GIT_USER_NAME }}
-          #git config user.email ${{ vars.GH_ACTIONS_BOT_GIT_USER_EMAIL }}
-          git config user.name "Micael Oliveira"
-          git config user.email micael.oliveira@anu.edu.au
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
           git checkout -b ${{ steps.info.outputs.new_branch }} origin/${{ matrix.branch }}
           git cherry-pick ${{ needs.process_comment.outputs.commits }}
