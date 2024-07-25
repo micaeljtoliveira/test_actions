@@ -81,7 +81,7 @@ jobs:
           echo "branch_matrix=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
 
       - name: Check PR Status
-        if: ! ${{ env.ERROR_MSG }}
+        if: (! ${{ env.ERROR_MSG }})
         run: |
           # Check if the PR has been merged
           if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
