@@ -102,7 +102,7 @@ jobs:
             if git merge-base --is-ancestor ${commit} origin/$target; then 
               echo "Commit $commit found in $target branch."
             else
-              missing_commits="$missing_commits \`$commit\`"
+              missing_commits="$missing_commits \\\`$commit\\\`"
             fi
           done
           if [[ -n "$missing_commits" ]]; then
@@ -118,7 +118,7 @@ jobs:
             if [[ -n "$(git ls-remote --heads origin ${branch})" ]]; then
               echo "Found branch $branch in repository."
             else
-              missing_branches="$missing_branches \`$branch\`"
+              missing_branches="$missing_branches \\\`$branch\\\`"
             fi
           done
           if [[ -n "$missing_branches" ]]; then
