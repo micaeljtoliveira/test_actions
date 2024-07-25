@@ -139,14 +139,14 @@ jobs:
             fi
           done
           if [[ -n "$duplicated_branches" ]]; then
-            error="> ${{ steps.command.outputs.command }}
+            errors="> ${{ steps.command.outputs.command }}
           
           Automatic cherry-pick failed. It seems there are previous unfinished attempts to cherry-pick commits from this PR to the following branch(es):"
             for branch in $duplicated_branches; do
-              message="$message
+              errors="$errors
            - [$branch](https://${{ github.repository }}/tree/$branch)"
             done
-            error="$error
+            errors="$errors
           
           If the current cherry-pick attempt is for a different set of commits, make sure that the previous attempts are fully merged and that the corresponding branches have been deleted."
              printf "ERROR_MSG<<EOF\n%s\nEOF" "$errors" >> $GITHUB_ENV
