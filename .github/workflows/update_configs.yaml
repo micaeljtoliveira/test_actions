@@ -81,7 +81,7 @@ jobs:
           echo "branch_matrix=$(jq -cn '$ARGS.positional' --args -- "${branches[@]}")" >> $GITHUB_OUTPUT
 
       - name: Check PR Status
-        if: ${{ env.ERROR_MSG }} = ''
+        if: ${{ env.ERROR_MSG }} == ''
         run: |
           # Check if the PR has been merged
           if [[ -z "${{ github.event.issue.pull_request.merged_at }}" ]]; then
@@ -89,7 +89,7 @@ jobs:
           fi
 
       - name: Check commits
-        if: ${{ env.ERROR_MSG }} = ''
+        if: ${{ env.ERROR_MSG }} == ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -108,7 +108,7 @@ jobs:
           fi
 
       - name: Check Target Branches
-        if: ${{ env.ERROR_MSG }} = ''
+        if: ${{ env.ERROR_MSG }} == ''
         run: |
           # Check that cherry-pick target branches actually exist
           missing_branches=""
@@ -154,7 +154,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ -n ${{ env.ERROR_MSG }} ]]; then
+          if [[ -n "${{ env.ERROR_MSG }}" ]]; then
             body="> ${{ steps.command.outputs.command }}
           
           Automatic cherry-pick failed. ${{ env.ERROR_MSG }}"
@@ -167,7 +167,7 @@ jobs:
   create_pr:
     runs-on: ubuntu-latest 
     needs: process_comment
-    if: ${{ needs.process_comment.outputs.status }} = "success"
+    if: ${{ needs.process_comment.outputs.status }} == "success"
     permissions:
       contents: write
       pull-requests: write
