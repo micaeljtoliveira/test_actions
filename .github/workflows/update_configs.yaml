@@ -63,7 +63,8 @@ jobs:
 
           # Check command correctness
           if [[ "$has_separator" = false ]]; then
-            errors=" the command is missing the \\\`into\\\` separator."
+            errors="
+           - the command is missing the \\\`into\\\` separator."
           else
             errors=""
             if [[ -z "$commits" ]]; then
